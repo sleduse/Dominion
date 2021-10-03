@@ -1,0 +1,120 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class spikeBacteria : MonoBehaviour
+{
+    public float delay;
+    public int abilityCount;
+
+    [Header("Duplicate")]
+    public GameObject split;
+    public int numberOfSplits;
+
+    [Header("Enlarge")]
+    public float enlargeAmount;
+
+    [Header("Flow")]
+    public float flowNumber;
+    public GameObject flowObject;
+    public float flowDelay;
+
+    public bool abilityD = true;
+    public float lifetime;
+    private float current;
+    // Start is called before the first frame update
+    void Start()
+    {
+        current = 0;
+        StartCoroutine(ability());
+        transform.localScale = new Vector3(3, 3, transform.localScale.z);
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        current += Time.deltaTime;
+        if (current >= lifetime)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    void splits()
+    {
+        for (int i = 0; i < numberOfSplits; i++)
+        {
+            Instantiate(split, transform.position + new Vector3(0, 0.3f, 0), Quaternion.Euler(0, 0, Random.Range(0, 360)));
+        }
+        delay = 33;
+    }
+
+    void enlarge()
+    {
+        transform.localScale += new Vector3(0.5f, 0.5f, 0);
+        delay = 7.5f;
+    }
+
+    void attract()
+    {
+        Collider2D[] cols = Physics2D.OverlapCircleAll(transform.position, 6);
+        foreach (Collider2D col in cols)
+        {
+            if (col.gameObject.CompareTag("Player"))
+            {
+                Rigidbody2D rb = col.gameObject.GetComponent<Rigidbody2D>();
+                if (rb != null)
+                {
+                    Vector2 direction = col.transform.position - transform.position;
+
+                    rb.AddForce(-direction * 90);
+                }
+            }
+
+        }
+    }
+
+    IEnumerator ability()
+    {
+        abilityCount = Random.Range(0, 9);
+
+        yield return new WaitForSeconds(Random.Range(delay, delay + 3));
+        if (abilityCount == 1)
+        {
+            splits();
+        }
+        if(abilityCount == 7)
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                Instantiate(split, transform.position + new Vector3(0, 0.3f, 0), Quaternion.Euler(0, 0, Random.Range(0, 360)));
+
+            }
+            delay = 17;
+        }
+        if (abilityCount == 2)
+        {
+            enlarge();
+        }
+        if (abilityCount == 3)
+        {
+            attract();
+            delay = 30f;
+        }
+        if (abilityCount == 4 || abilityCount == 9 || abilityCount == 6)
+        {
+            float increment = transform.localScale.x / flowNumber;
+            for (int i = 0; i < flowNumber; i++)
+            {
+                GameObject obj = (GameObject)Instantiate(flowObject, transform.position, transform.rotation);
+                obj.GetComponent<Rigidbody2D>().AddForce(new Vector2(0, 5), ForceMode2D.Impulse);
+                yield return new WaitForSeconds(flowDelay);
+                transform.localScale = new Vector3(transform.localScale.x - increment, transform.localScale.y - increment, transform.localScale.x);
+            }
+            Destroy(gameObject);
+            delay = 40f;
+        }
+
+        StartCoroutine(ability());
+    }
+}
